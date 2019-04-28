@@ -1,15 +1,13 @@
-#include <SD.h>
+//#include <SD.h>
 #include <driver/gpio.h>
 #include <driver/i2s.h>
 
-static const int SD_CS = 21;
 static const int bytesToRead = 1024 * 1000;
-File f;
 
 void setup()
 {
 	Serial.begin(115200);
-
+  delay(5000);
 	i2s_config_t i2s_config;
 	i2s_config.mode = (i2s_mode_t) (I2S_MODE_MASTER | I2S_MODE_RX);
 	i2s_config.sample_rate = 16000;
@@ -31,9 +29,6 @@ void setup()
 	i2s_stop(I2S_NUM_1);
 
 	i2s_start(I2S_NUM_1);
-
-	SD.begin(SD_CS);
-	f = SD.open("/track.i2s", FILE_WRITE);
 }
 
 void loop()
@@ -45,14 +40,17 @@ void loop()
 	uint8_t buf[64];
 	memset(buf, 0, 64);
 	int bytes_read = 0;
+
 	while(bytes_read == 0) {
 		bytes_read = i2s_read_bytes(I2S_NUM_1, (char*) buf, 64, 0);
 	}
-	f.write(buf, 64);
+ 
+  for (int i = 0; i<64; i++){
+    Serial.write(buf[i]);
+  }
+
 	totalBytesRead += 64;
 	if (totalBytesRead >= bytesToRead) {
-		f.close();
-		Serial.println("DONE WRITING");
 		return;
 	}
 }
